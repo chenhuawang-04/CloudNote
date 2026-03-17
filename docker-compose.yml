@@ -2,7 +2,7 @@ services:
   server:
     build: ./server
     ports:
-      - "8000:8000"
+      - "11408:11408"
     volumes:
       - cloudnote-storage:/app/storage
       - cloudnote-db:/app/data
