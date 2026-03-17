@@ -117,7 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               controller: _urlCtrl,
               decoration: const InputDecoration(
                 labelText: '服务器地址',
-                hintText: 'http://192.168.1.100:8000',
+                hintText: 'http://192.168.1.100:11408',
                 border: OutlineInputBorder(),
               ),
             ),

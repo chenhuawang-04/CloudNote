@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AppConfig {
   static const _key = 'server_url';
-  static String _serverUrl = 'http://localhost:8000';
+  static String _serverUrl = 'http://localhost:11408';
 
   static String get serverUrl => _serverUrl;
   static String get apiBase => '$_serverUrl/api/v1';

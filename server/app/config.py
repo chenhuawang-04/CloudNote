@@ -15,7 +15,7 @@ _CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.yaml"
 
 class ServerConfig(BaseModel):
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 11408
 
 
 class StorageConfig(BaseModel):
