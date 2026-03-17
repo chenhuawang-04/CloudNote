@@ -9,10 +9,12 @@ import 'services/desktop_integration.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
-  if (Platform.isWindows) {
-    await DesktopIntegration.instance.init();
-  }
   runApp(const CloudNoteApp());
+  if (Platform.isWindows) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DesktopIntegration.instance.init();
+    });
+  }
 }
 
 class CloudNoteApp extends StatelessWidget {

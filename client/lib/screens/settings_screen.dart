@@ -11,6 +11,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _urlCtrl;
+  late TextEditingController _keyCtrl;
   late TextEditingController _aiBaseUrlCtrl;
   late TextEditingController _aiKeyCtrl;
   late TextEditingController _aiModelCtrl;
@@ -22,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _urlCtrl = TextEditingController(text: AppConfig.serverUrl);
+    _keyCtrl = TextEditingController(text: AppConfig.serverKey);
     _aiBaseUrlCtrl = TextEditingController();
     _aiKeyCtrl = TextEditingController();
     _aiModelCtrl = TextEditingController();
@@ -30,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _urlCtrl.dispose();
+    _keyCtrl.dispose();
     _aiBaseUrlCtrl.dispose();
     _aiKeyCtrl.dispose();
     _aiModelCtrl.dispose();
@@ -38,6 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _save() async {
     await AppConfig.setServerUrl(_urlCtrl.text.trim());
+    await AppConfig.setServerKey(_keyCtrl.text.trim());
     setState(() => _status = '已保存');
     _loadAiSettings();
   }
@@ -45,6 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _test() async {
     setState(() => _status = '正在连接...');
     await AppConfig.setServerUrl(_urlCtrl.text.trim());
+    await AppConfig.setServerKey(_keyCtrl.text.trim());
     final ok = await ApiClient().checkHealth();
     setState(() => _status = ok ? '连接成功' : '连接失败');
     if (ok) _loadAiSettings();
@@ -118,6 +123,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: const InputDecoration(
                 labelText: '服务器地址',
                 hintText: 'http://192.168.1.100:11408',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _keyCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: '访问密钥',
+                hintText: '请输入服务器密钥',
                 border: OutlineInputBorder(),
               ),
             ),

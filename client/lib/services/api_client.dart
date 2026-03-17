@@ -9,6 +9,7 @@ class ApiClient {
   factory ApiClient() => _instance;
 
   late Dio dio;
+  static const _keyHeader = 'X-CloudNote-Key';
 
   ApiClient._() {
     dio = Dio(BaseOptions(
@@ -16,6 +17,13 @@ class ApiClient {
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 60),
     ));
+    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+      final headers = AppConfig.authHeaders;
+      if (headers.isNotEmpty) {
+        options.headers[_keyHeader] = headers[_keyHeader];
+      }
+      handler.next(options);
+    }));
   }
 
   String get _base => AppConfig.apiBase;
@@ -76,6 +84,8 @@ class ApiClient {
   }
 
   String downloadUrl(String fileId) => '$_base/files/$fileId/download';
+
+  Map<String, String> get authHeaders => AppConfig.authHeaders;
 
   Future<void> downloadFile(String fileId, String savePath,
       {void Function(int, int)? onProgress}) async {

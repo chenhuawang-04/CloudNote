@@ -2,12 +2,13 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_config
 from .database import init_db
 from .routers import files, folders, ocr, settings
+from .security import verify_key
 
 
 @asynccontextmanager
@@ -29,6 +30,7 @@ app = FastAPI(
     description="跨平台云存储 & 图片OCR工具",
     version="1.0.0",
     lifespan=lifespan,
+    dependencies=[Depends(verify_key)],
 )
 
 # CORS — allow all origins for development

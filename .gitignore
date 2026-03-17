@@ -8,6 +8,7 @@ __pycache__/
 
 # Server storage
 server/storage/
+server/key.json
 
 # Flutter / Dart
 client/.dart_tool/

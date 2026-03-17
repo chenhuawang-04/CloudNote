@@ -128,6 +128,7 @@ class _QuestionCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: Image.network(
                   ApiClient().downloadUrl(question.cropFileId!),
+                  headers: ApiClient().authHeaders,
                   fit: BoxFit.fitWidth,
                   height: 150,
                   width: double.infinity,

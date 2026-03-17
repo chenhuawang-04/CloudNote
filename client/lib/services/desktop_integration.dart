@@ -92,6 +92,7 @@ class DesktopIntegration with TrayListener, WindowListener {
     if (_exiting) {
       return;
     }
+    await windowManager.setPreventClose(true);
     await windowManager.hide();
   }
 }

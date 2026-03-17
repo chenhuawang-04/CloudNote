@@ -55,8 +55,15 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
       ),
       body: isImage
           ? InteractiveViewer(
-              child: Center(child: Image.network(url, fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 64))),
+              child: Center(
+                child: Image.network(
+                  url,
+                  headers: ApiClient().authHeaders,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.broken_image, size: 64),
+                ),
+              ),
             )
           : Center(
               child: Column(
