@@ -1,7 +1,10 @@
 /// Dio-based HTTP client wrapper for the CloudNote API.
 library;
 
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
+
 import '../config.dart';
 
 class ApiClient {
@@ -110,6 +113,17 @@ class ApiClient {
       {void Function(int, int)? onProgress}) async {
     await dio.download(downloadUrl(fileId), savePath,
         onReceiveProgress: onProgress);
+  }
+
+  Future<Uint8List> downloadBytes(String fileId,
+      {void Function(int, int)? onProgress}) async {
+    final res = await dio.get<List<int>>(
+      downloadUrl(fileId),
+      options: Options(responseType: ResponseType.bytes),
+      onReceiveProgress: onProgress,
+    );
+    final data = res.data ?? const <int>[];
+    return Uint8List.fromList(data);
   }
 
   Future<void> deleteFile(String id) async {

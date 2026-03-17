@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:cross_file/cross_file.dart';
 import '../models/file_item.dart';
 import '../services/api_client.dart';
 
@@ -31,16 +35,27 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
   }
 
   Future<void> _download() async {
-    final savePath = await FilePicker.platform.saveFile(
-      dialogTitle: '保存到',
-      fileName: widget.file.name,
-    );
+    final savePath = await _pickSavePath();
     if (savePath == null || savePath.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Save canceled')));
+      }
       return;
     }
     setState(() => _downloading = true);
     try {
-      await ApiClient().downloadFile(widget.file.id, savePath);
+      if (_isContentUri(savePath) || Platform.isAndroid) {
+        final bytes = await ApiClient().downloadBytes(widget.file.id);
+        final xfile = XFile.fromData(
+          bytes,
+          name: widget.file.name,
+          mimeType: widget.file.mimeType,
+        );
+        await xfile.saveTo(savePath);
+      } else {
+        await ApiClient().downloadFile(widget.file.id, savePath);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('已保存到: $savePath')));
@@ -53,6 +68,18 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
     }
     setState(() => _downloading = false);
   }
+
+  Future<String?> _pickSavePath() async {
+    if (Platform.isAndroid) {
+      return getSavePath(suggestedName: widget.file.name);
+    }
+    return FilePicker.platform.saveFile(
+      dialogTitle: 'Save to',
+      fileName: widget.file.name,
+    );
+  }
+
+  bool _isContentUri(String path) => path.startsWith('content://');
 
   Future<void> _loadMarkdown() async {
     try {
