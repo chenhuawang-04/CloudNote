@@ -1,0 +1,15 @@
+services:
+  server:
+    build: ./server
+    ports:
+      - "8000:8000"
+    volumes:
+      - cloudnote-storage:/app/storage
+      - cloudnote-db:/app/data
+    environment:
+      - CLOUDNOTE_AI_API_KEY=${CLOUDNOTE_AI_API_KEY:-}
+    restart: unless-stopped
+
+volumes:
+  cloudnote-storage:
+  cloudnote-db:

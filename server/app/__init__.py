@@ -1,0 +1,1 @@
+"""CloudNote server package."""

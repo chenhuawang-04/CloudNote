@@ -1,0 +1,22 @@
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+storage:
+  root: "./storage"
+  max_upload_size_mb: 50
+
+database:
+  path: "./data/cloudnote.db"
+
+ai:
+  base_url: "https://api.openai.com/v1"
+  api_key: ""          # 推荐用环境变量 CLOUDNOTE_AI_API_KEY
+  model: "gpt-4o"
+
+pdf:
+  pandoc_path: "pandoc"
+  cjk_css: "./app/static/cjk.css"
+
+crop:
+  padding_percent: 5

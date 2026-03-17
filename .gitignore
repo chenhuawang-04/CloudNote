@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.env
+*.db
+
+# Server storage
+server/storage/
+
+# Flutter / Dart
+client/.dart_tool/
+client/.packages
+client/build/
+client/windows/flutter/ephemeral/
+client/android/.gradle/
+client/android/app/build/
+client/.flutter-plugins
+client/.flutter-plugins-dependencies
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
