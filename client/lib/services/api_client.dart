@@ -13,9 +13,9 @@ class ApiClient {
 
   ApiClient._() {
     dio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 60),
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 60),
+      sendTimeout: const Duration(seconds: 120),
     ));
     dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
       final headers = AppConfig.authHeaders;
@@ -86,6 +86,25 @@ class ApiClient {
   String downloadUrl(String fileId) => '$_base/files/$fileId/download';
 
   Map<String, String> get authHeaders => AppConfig.authHeaders;
+
+  Future<String> fetchText(String fileId) async {
+    final res = await dio.get(
+      downloadUrl(fileId),
+      options: Options(responseType: ResponseType.plain),
+    );
+    return res.data?.toString() ?? '';
+  }
+
+  Future<int> pdfPageCount(String fileId) async {
+    final res = await dio.get('$_base/files/$fileId/render/pages');
+    final pages = res.data['pages'];
+    if (pages is int) return pages;
+    if (pages is String) return int.tryParse(pages) ?? 0;
+    return 0;
+  }
+
+  String pdfPageUrl(String fileId, int page) =>
+      '$_base/files/$fileId/render/page/$page';
 
   Future<void> downloadFile(String fileId, String savePath,
       {void Function(int, int)? onProgress}) async {

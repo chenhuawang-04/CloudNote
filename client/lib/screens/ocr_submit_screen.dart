@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/ocr_service.dart';
-import 'ocr_result_screen.dart';
+import '../services/ocr_task_store.dart';
+import 'ocr_tasks_screen.dart';
 
 class OcrSubmitScreen extends StatefulWidget {
   const OcrSubmitScreen({super.key});
@@ -64,29 +65,12 @@ class _OcrSubmitScreenState extends State<OcrSubmitScreen> {
 
     try {
       final task = await _ocrSvc.submit(_imagePath!, _imageName ?? 'image.jpg');
-
-      // Poll for completion
-      setState(() => _statusText = '正在处理...');
-      final result = await _ocrSvc.pollUntilDone(
-        task.taskId,
-        onUpdate: (t) {
-          if (mounted) {
-            setState(() => _statusText = t.progressMsg ?? t.status);
-          }
-        },
-      );
-
+      OcrTaskStore.instance.addTask(task.taskId);
       if (!mounted) return;
-
-      if (result.isDone) {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => OcrResultScreen(taskId: result.taskId)));
-      } else {
-        setState(() {
-          _submitting = false;
-          _statusText = '处理失败: ${result.error ?? "未知错误"}';
-        });
-      }
+      setState(() {
+        _submitting = false;
+        _statusText = '已提交，后台识别中';
+      });
     } catch (e) {
       setState(() {
         _submitting = false;
@@ -164,6 +148,15 @@ class _OcrSubmitScreenState extends State<OcrSubmitScreen> {
               if (_statusText.isNotEmpty && !_submitting) ...[
                 const SizedBox(height: 16),
                 Text(_statusText, style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.list_alt),
+                  label: const Text('查看进度'),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OcrTasksScreen()),
+                  ),
+                ),
               ],
             ],
           ),

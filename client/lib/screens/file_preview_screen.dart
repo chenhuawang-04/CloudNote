@@ -1,5 +1,6 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/file_item.dart';
 import '../services/api_client.dart';
 
@@ -14,12 +15,31 @@ class FilePreviewScreen extends StatefulWidget {
 
 class _FilePreviewScreenState extends State<FilePreviewScreen> {
   bool _downloading = false;
+  String? _markdown;
+  String? _mdError;
+  int? _pdfPages;
+  String? _pdfError;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.file.isMarkdown) {
+      _loadMarkdown();
+    } else if (widget.file.isPdf) {
+      _loadPdfPages();
+    }
+  }
 
   Future<void> _download() async {
+    final savePath = await FilePicker.platform.saveFile(
+      dialogTitle: '保存到',
+      fileName: widget.file.name,
+    );
+    if (savePath == null || savePath.isEmpty) {
+      return;
+    }
     setState(() => _downloading = true);
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final savePath = '${dir.path}/${widget.file.name}';
       await ApiClient().downloadFile(widget.file.id, savePath);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -34,9 +54,37 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
     setState(() => _downloading = false);
   }
 
+  Future<void> _loadMarkdown() async {
+    try {
+      final text = await ApiClient().fetchText(widget.file.id);
+      if (mounted) {
+        setState(() => _markdown = text);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _mdError = e.toString());
+      }
+    }
+  }
+
+  Future<void> _loadPdfPages() async {
+    try {
+      final pages = await ApiClient().pdfPageCount(widget.file.id);
+      if (mounted) {
+        setState(() => _pdfPages = pages);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _pdfError = e.toString());
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isImage = widget.file.isImage;
+    final isMarkdown = widget.file.isMarkdown;
+    final isPdf = widget.file.isPdf;
     final url = ApiClient().downloadUrl(widget.file.id);
 
     return Scaffold(
@@ -65,7 +113,11 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
                 ),
               ),
             )
-          : Center(
+          : isMarkdown
+              ? _buildMarkdown()
+              : isPdf
+                  ? _buildPdfPages()
+                  : Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -84,6 +136,51 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildMarkdown() {
+    if (_mdError != null) {
+      return Center(child: Text('加载失败: $_mdError'));
+    }
+    if (_markdown == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Markdown(
+      data: _markdown ?? '',
+      selectable: true,
+      padding: const EdgeInsets.all(16),
+    );
+  }
+
+  Widget _buildPdfPages() {
+    if (_pdfError != null) {
+      return Center(child: Text('加载失败: $_pdfError'));
+    }
+    final pages = _pdfPages;
+    if (pages == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (pages == 0) {
+      return const Center(child: Text('PDF 无可渲染页面'));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: pages,
+      itemBuilder: (context, index) {
+        final page = index + 1;
+        final imgUrl = ApiClient().pdfPageUrl(widget.file.id, page);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Image.network(
+            imgUrl,
+            headers: ApiClient().authHeaders,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) =>
+                const SizedBox(height: 120, child: Center(child: Text('页面加载失败'))),
+          ),
+        );
+      },
     );
   }
 }

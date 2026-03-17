@@ -7,11 +7,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 
 from ..config import get_config
 from ..database import get_db
 from ..models import FileOut, BrowseOut, FolderOut
+from ..services.pdf_renderer import ensure_rendered
 from ..services.storage import save_upload, delete_path
 from ..utils.helpers import sanitize_filename, guess_mime
 
@@ -20,6 +22,12 @@ router = APIRouter(tags=["files"])
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _is_pdf(name: str, mime: str | None) -> bool:
+    if mime and mime.lower() == "application/pdf":
+        return True
+    return name.lower().endswith(".pdf")
 
 
 @router.get("/files", response_model=list[FileOut])
@@ -92,6 +100,55 @@ async def download_file(file_id: str):
     return FileResponse(
         str(p), filename=f["name"], media_type=f.get("mime_type"),
     )
+
+
+@router.get("/files/{file_id}/render/pages")
+async def render_pdf_pages(file_id: str):
+    db = await get_db()
+    rows = await db.execute_fetchall(
+        "SELECT * FROM files WHERE id = ?", (file_id,),
+    )
+    if not rows:
+        raise HTTPException(404, "File not found")
+    f = dict(rows[0])
+    if not _is_pdf(f["name"], f.get("mime_type")):
+        raise HTTPException(400, "Not a PDF file")
+    p = Path(f["disk_path"])
+    if not p.exists():
+        raise HTTPException(404, "File missing from disk")
+
+    cfg = get_config()
+    render_dir = Path(cfg.storage.root) / "_renders" / file_id
+    pages = await run_in_threadpool(ensure_rendered, str(p), render_dir)
+    return {"pages": pages}
+
+
+@router.get("/files/{file_id}/render/page/{page}")
+async def render_pdf_page(file_id: str, page: int):
+    if page < 1:
+        raise HTTPException(400, "Invalid page")
+    db = await get_db()
+    rows = await db.execute_fetchall(
+        "SELECT * FROM files WHERE id = ?", (file_id,),
+    )
+    if not rows:
+        raise HTTPException(404, "File not found")
+    f = dict(rows[0])
+    if not _is_pdf(f["name"], f.get("mime_type")):
+        raise HTTPException(400, "Not a PDF file")
+    p = Path(f["disk_path"])
+    if not p.exists():
+        raise HTTPException(404, "File missing from disk")
+
+    cfg = get_config()
+    render_dir = Path(cfg.storage.root) / "_renders" / file_id
+    pages = await run_in_threadpool(ensure_rendered, str(p), render_dir)
+    if page > pages:
+        raise HTTPException(404, "Page out of range")
+    img = render_dir / f"page_{page}.png"
+    if not img.exists():
+        raise HTTPException(404, "Rendered page missing")
+    return FileResponse(str(img), media_type="image/png")
 
 
 @router.get("/files/{file_id}/info", response_model=FileOut)

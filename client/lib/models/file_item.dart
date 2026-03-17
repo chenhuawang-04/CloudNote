@@ -34,4 +34,17 @@ class FileItem {
 
   bool get isImage =>
       mimeType != null && mimeType!.startsWith('image/');
+
+  bool get isMarkdown {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.md') || lower.endsWith('.markdown')) return true;
+    return mimeType != null &&
+        (mimeType!.contains('markdown') || mimeType == 'text/plain');
+  }
+
+  bool get isPdf {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.pdf')) return true;
+    return mimeType != null && mimeType == 'application/pdf';
+  }
 }

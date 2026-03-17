@@ -8,6 +8,7 @@ import 'folder_screen.dart';
 import 'upload_screen.dart';
 import 'file_preview_screen.dart';
 import 'ocr_submit_screen.dart';
+import 'ocr_tasks_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -147,6 +148,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const OcrSubmitScreen()))
                   .then((_) => _refresh())),
+          IconButton(icon: const Icon(Icons.list_alt), tooltip: '识别进度',
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const OcrTasksScreen()))),
           IconButton(icon: const Icon(Icons.settings), tooltip: '设置',
               onPressed: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const SettingsScreen()))),
