@@ -12,13 +12,11 @@ class ScreenshotWatcher {
 
   StreamSubscription<FileSystemEvent>? _subscription;
   final Map<String, DateTime> _recent = {};
-  String? _iconPath;
 
-  Future<void> start({String? iconPath}) async {
+  Future<void> start() async {
     if (!Platform.isWindows || _subscription != null) {
       return;
     }
-    _iconPath = iconPath;
 
     final dirPath = _defaultScreenshotDir();
     if (dirPath.isEmpty) {
@@ -64,7 +62,6 @@ class ScreenshotWatcher {
     final notification = LocalNotification(
       title: 'New screenshot detected',
       body: '$fileName - click to upload',
-      icon: _iconPath,
     );
     notification.onClick = () {
       unawaited(_upload(path));
@@ -83,14 +80,12 @@ class ScreenshotWatcher {
       final success = LocalNotification(
         title: 'Upload complete',
         body: fileName,
-        icon: _iconPath,
       );
       await success.show();
     } catch (e) {
       final failure = LocalNotification(
         title: 'Upload failed',
         body: '$fileName - $e',
-        icon: _iconPath,
       );
       await failure.show();
     }

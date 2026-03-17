@@ -39,7 +39,7 @@ class DesktopIntegration with TrayListener, WindowListener {
       MenuItem(key: 'exit', label: 'Exit'),
     ]));
 
-    await ScreenshotWatcher.instance.start(iconPath: _iconPath);
+    await ScreenshotWatcher.instance.start();
   }
 
   Future<String> _ensureTrayIcon() async {
