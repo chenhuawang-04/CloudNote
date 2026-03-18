@@ -39,7 +39,7 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
     if (savePath == null || savePath.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Save canceled')));
+            .showSnackBar(const SnackBar(content: Text('未选择保存位置')));
       }
       return;
     }
@@ -71,7 +71,10 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
 
   Future<String?> _pickSavePath() async {
     if (Platform.isAndroid) {
-      return getSavePath(suggestedName: widget.file.name);
+      final location = await getSaveLocation(
+        suggestedName: widget.file.name,
+      );
+      return location?.path;
     }
     return FilePicker.platform.saveFile(
       dialogTitle: 'Save to',

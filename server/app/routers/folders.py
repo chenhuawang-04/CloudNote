@@ -93,6 +93,13 @@ async def delete_folder(folder_id: str):
     if not row:
         raise HTTPException(404, "Folder not found")
 
+    # Detach OCR task references to avoid FK restrictions
+    await db.execute(
+        "UPDATE ocr_tasks SET result_folder_id = NULL WHERE result_folder_id = ?",
+        (folder_id,),
+    )
+    await db.commit()
+
     delete_path(row[0]["disk_path"])
     await db.execute("DELETE FROM folders WHERE id = ?", (folder_id,))
     await db.commit()
