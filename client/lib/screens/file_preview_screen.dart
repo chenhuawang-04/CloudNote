@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:cross_file/cross_file.dart';
+
 import '../models/file_item.dart';
 import '../services/api_client.dart';
+import '../services/download_service.dart';
 
 class FilePreviewScreen extends StatefulWidget {
   final FileItem file;
@@ -35,54 +35,51 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
   }
 
   Future<void> _download() async {
-    final savePath = await _pickSavePath();
-    if (savePath == null || savePath.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('未选择保存位置')));
-      }
-      return;
-    }
     setState(() => _downloading = true);
     try {
-      if (_isContentUri(savePath) || Platform.isAndroid) {
+      if (Platform.isAndroid) {
         final bytes = await ApiClient().downloadBytes(widget.file.id);
-        final xfile = XFile.fromData(
+        await DownloadService.saveToDownloads(
           bytes,
-          name: widget.file.name,
+          fileName: widget.file.name,
           mimeType: widget.file.mimeType,
         );
-        await xfile.saveTo(savePath);
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Saved to Downloads')));
+        }
       } else {
+        final savePath = await _pickSavePath();
+        if (savePath == null || savePath.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text('No save location selected')));
+          }
+          setState(() => _downloading = false);
+          return;
+        }
         await ApiClient().downloadFile(widget.file.id, savePath);
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('已保存到: $savePath')));
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Saved to: $savePath')));
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('下载失败: $e')));
+            .showSnackBar(SnackBar(content: Text('Download failed: $e')));
       }
     }
     setState(() => _downloading = false);
   }
 
   Future<String?> _pickSavePath() async {
-    if (Platform.isAndroid) {
-      final location = await getSaveLocation(
-        suggestedName: widget.file.name,
-      );
-      return location?.path;
-    }
     return FilePicker.platform.saveFile(
       dialogTitle: 'Save to',
       fileName: widget.file.name,
     );
   }
 
-  bool _isContentUri(String path) => path.startsWith('content://');
 
   Future<void> _loadMarkdown() async {
     try {
