@@ -5,6 +5,7 @@ class FileItem {
   final String? mimeType;
   final String? folderId;
   final String createdAt;
+  final String? deletedAt;
 
   FileItem({
     required this.id,
@@ -13,6 +14,7 @@ class FileItem {
     this.mimeType,
     this.folderId,
     required this.createdAt,
+    this.deletedAt,
   });
 
   factory FileItem.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class FileItem {
       mimeType: json['mime_type'],
       folderId: json['folder_id'],
       createdAt: json['created_at'],
+      deletedAt: json['deleted_at'],
     );
   }
 

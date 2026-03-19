@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ── Folders ──────────────────────────────────────────────
@@ -25,6 +25,7 @@ class FolderOut(BaseModel):
     parent_id: Optional[str] = None
     created_at: str
     updated_at: str
+    deleted_at: Optional[str] = None
 
 
 # ── Files ────────────────────────────────────────────────
@@ -36,6 +37,7 @@ class FileOut(BaseModel):
     mime_type: Optional[str] = None
     folder_id: Optional[str] = None
     created_at: str
+    deleted_at: Optional[str] = None
 
 
 # ── OCR ──────────────────────────────────────────────────
@@ -67,11 +69,11 @@ class OcrResultOut(BaseModel):
     status: str
     original_file_id: Optional[str] = None
     result_folder_id: Optional[str] = None
-    questions: list[QuestionResult] = []
+    questions: list[QuestionResult] = Field(default_factory=list)
 
 
 # ── Browse ───────────────────────────────────────────────
 
 class BrowseOut(BaseModel):
-    folders: list[FolderOut] = []
-    files: list[FileOut] = []
+    folders: list[FolderOut] = Field(default_factory=list)
+    files: list[FileOut] = Field(default_factory=list)

@@ -64,6 +64,14 @@ class ApiClient {
     await dio.delete('$_base/folders/$id');
   }
 
+  Future<void> restoreFolder(String id) async {
+    await dio.post('$_base/trash/folders/$id/restore');
+  }
+
+  Future<void> purgeFolder(String id) async {
+    await dio.delete('$_base/trash/folders/$id');
+  }
+
   // ── Files ──
   Future<List<Map<String, dynamic>>> listFiles({String? folderId}) async {
     final res = await dio.get('$_base/files',
@@ -130,11 +138,39 @@ class ApiClient {
     await dio.delete('$_base/files/$id');
   }
 
+  Future<void> restoreFile(String id) async {
+    await dio.post('$_base/trash/files/$id/restore');
+  }
+
+  Future<void> purgeFile(String id) async {
+    await dio.delete('$_base/trash/files/$id');
+  }
+
   // ── Browse ──
   Future<Map<String, dynamic>> browse({String? folderId}) async {
     final res = await dio.get('$_base/browse',
         queryParameters: folderId != null ? {'folder_id': folderId} : null);
     return Map<String, dynamic>.from(res.data);
+  }
+
+  Future<Map<String, dynamic>> search(String query, {String? folderId}) async {
+    final res = await dio.get(
+      '$_base/search',
+      queryParameters: {
+        'q': query,
+        if (folderId != null) 'folder_id': folderId,
+      },
+    );
+    return Map<String, dynamic>.from(res.data);
+  }
+
+  Future<Map<String, dynamic>> browseTrash() async {
+    final res = await dio.get('$_base/trash');
+    return Map<String, dynamic>.from(res.data);
+  }
+
+  Future<void> emptyTrash() async {
+    await dio.delete('$_base/trash');
   }
 
   // ── OCR ──

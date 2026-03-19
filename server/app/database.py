@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS folders (
     disk_path TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
+    deleted_at TEXT,
     FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE
 );
 
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS files (
     folder_id TEXT,
     disk_path TEXT NOT NULL,
     created_at TEXT NOT NULL,
+    deleted_at TEXT,
     FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE
 );
 
@@ -44,6 +46,32 @@ CREATE TABLE IF NOT EXISTS ocr_tasks (
 );
 """
 
+_INDEXES = """
+CREATE INDEX IF NOT EXISTS idx_folders_parent_deleted_name
+ON folders(parent_id, deleted_at, name);
+
+CREATE INDEX IF NOT EXISTS idx_files_folder_deleted_name
+ON files(folder_id, deleted_at, name);
+
+CREATE INDEX IF NOT EXISTS idx_folders_deleted_at
+ON folders(deleted_at);
+
+CREATE INDEX IF NOT EXISTS idx_files_deleted_at
+ON files(deleted_at);
+"""
+
+
+async def _has_column(db: aiosqlite.Connection, table: str, column: str) -> bool:
+    rows = await db.execute_fetchall(f"PRAGMA table_info({table})")
+    return any(row["name"] == column for row in rows)
+
+
+async def _run_migrations(db: aiosqlite.Connection) -> None:
+    if not await _has_column(db, "folders", "deleted_at"):
+        await db.execute("ALTER TABLE folders ADD COLUMN deleted_at TEXT")
+    if not await _has_column(db, "files", "deleted_at"):
+        await db.execute("ALTER TABLE files ADD COLUMN deleted_at TEXT")
+
 
 async def init_db() -> None:
     global _db
@@ -53,6 +81,8 @@ async def init_db() -> None:
     await _db.execute("PRAGMA journal_mode=WAL")
     await _db.execute("PRAGMA foreign_keys=ON")
     await _db.executescript(_SCHEMA)
+    await _run_migrations(_db)
+    await _db.executescript(_INDEXES)
     await _db.commit()
 
 

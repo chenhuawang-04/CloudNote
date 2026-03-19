@@ -4,6 +4,7 @@ class FolderItem {
   final String? parentId;
   final String createdAt;
   final String updatedAt;
+  final String? deletedAt;
 
   FolderItem({
     required this.id,
@@ -11,6 +12,7 @@ class FolderItem {
     this.parentId,
     required this.createdAt,
     required this.updatedAt,
+    this.deletedAt,
   });
 
   factory FolderItem.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class FolderItem {
       parentId: json['parent_id'],
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
+      deletedAt: json['deleted_at'],
     );
   }
 }
