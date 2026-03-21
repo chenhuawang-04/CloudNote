@@ -33,13 +33,7 @@ class FileTile extends StatelessWidget {
   }
 
   Widget _buildPreview() {
-    if (!file.isImage && !file.isPdf) {
-      return Icon(_icon, size: 36, color: Colors.blueGrey);
-    }
-
-    final imageUrl = file.isPdf
-        ? ApiClient().pdfPageUrl(file.id, 1)
-        : ApiClient().downloadUrl(file.id);
+    final imageUrl = ApiClient().thumbnailUrl(file.id);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),

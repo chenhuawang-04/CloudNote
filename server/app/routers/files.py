@@ -15,6 +15,7 @@ from ..database import get_db
 from ..models import FileOut, BrowseOut
 from ..services.pdf_renderer import ensure_rendered
 from ..services.storage import save_upload
+from ..services.thumbnailer import ensure_thumbnail
 from ..services.trash import (
     active_name_search,
     clear_trash,
@@ -109,6 +110,33 @@ async def download_file(file_id: str):
     return FileResponse(
         str(p), filename=f["name"], media_type=f.get("mime_type"),
     )
+
+
+@router.get("/files/{file_id}/thumbnail")
+async def file_thumbnail(file_id: str):
+    db = await get_db()
+    rows = await db.execute_fetchall(
+        "SELECT * FROM files WHERE id = ?",
+        (file_id,),
+    )
+    if not rows:
+        raise HTTPException(404, "File not found")
+
+    file_row = dict(rows[0])
+    source_path = Path(file_row["disk_path"])
+    if not source_path.exists():
+        raise HTTPException(404, "File missing from disk")
+
+    cfg = get_config()
+    cache_dir = Path(cfg.storage.root) / "_thumbs" / file_id
+    thumbnail_path = await run_in_threadpool(
+        ensure_thumbnail,
+        str(source_path),
+        cache_dir,
+        file_name=file_row["name"],
+        mime_type=file_row.get("mime_type"),
+    )
+    return FileResponse(str(thumbnail_path), media_type="image/jpeg")
 
 
 @router.get("/files/{file_id}/render/pages")

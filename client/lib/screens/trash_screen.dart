@@ -180,6 +180,40 @@ class _TrashScreenState extends State<TrashScreen> {
     return Icons.insert_drive_file;
   }
 
+  Widget _buildFilePreview(FileItem file) {
+    final imageUrl = _api.thumbnailUrl(file.id);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 52,
+        height: 52,
+        color: const Color(0xFFF2F4F7),
+        child: Image.network(
+          imageUrl,
+          headers: _api.authHeaders,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.medium,
+          cacheWidth: 104,
+          cacheHeight: 104,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) {
+              return child;
+            }
+            return const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          },
+          errorBuilder: (_, __, ___) =>
+              Icon(_fileIcon(file), size: 30, color: Colors.blueGrey),
+        ),
+      ),
+    );
+  }
+
   String _folderSubtitle(FolderItem folder) {
     final deletedAt = formatTimestamp(folder.deletedAt);
     return deletedAt.isEmpty ? 'Deleted item' : 'Deleted on $deletedAt';
@@ -297,7 +331,7 @@ class _TrashScreenState extends State<TrashScreen> {
 
   Widget _buildFileTile(FileItem file) {
     return ListTile(
-      leading: Icon(_fileIcon(file), size: 34, color: Colors.blueGrey),
+      leading: _buildFilePreview(file),
       title: Text(file.name, overflow: TextOverflow.ellipsis),
       subtitle: Text(_fileSubtitle(file)),
       trailing: PopupMenuButton<String>(

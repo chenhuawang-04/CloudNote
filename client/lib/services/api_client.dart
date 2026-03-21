@@ -15,18 +15,24 @@ class ApiClient {
   static const _keyHeader = 'X-CloudNote-Key';
 
   ApiClient._() {
-    dio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 20),
-      receiveTimeout: const Duration(seconds: 60),
-      sendTimeout: const Duration(seconds: 120),
-    ));
-    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-      final headers = AppConfig.authHeaders;
-      if (headers.isNotEmpty) {
-        options.headers[_keyHeader] = headers[_keyHeader];
-      }
-      handler.next(options);
-    }));
+    dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 60),
+        sendTimeout: const Duration(seconds: 120),
+      ),
+    );
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final headers = AppConfig.authHeaders;
+          if (headers.isNotEmpty) {
+            options.headers[_keyHeader] = headers[_keyHeader];
+          }
+          handler.next(options);
+        },
+      ),
+    );
   }
 
   String get _base => AppConfig.apiBase;
@@ -43,16 +49,21 @@ class ApiClient {
 
   // ── Folders ──
   Future<List<Map<String, dynamic>>> listFolders({String? parentId}) async {
-    final res = await dio.get('$_base/folders',
-        queryParameters: parentId != null ? {'parent_id': parentId} : null);
+    final res = await dio.get(
+      '$_base/folders',
+      queryParameters: parentId != null ? {'parent_id': parentId} : null,
+    );
     return List<Map<String, dynamic>>.from(res.data);
   }
 
-  Future<Map<String, dynamic>> createFolder(String name, {String? parentId}) async {
-    final res = await dio.post('$_base/folders', data: {
-      'name': name,
-      if (parentId != null) 'parent_id': parentId,
-    });
+  Future<Map<String, dynamic>> createFolder(
+    String name, {
+    String? parentId,
+  }) async {
+    final res = await dio.post(
+      '$_base/folders',
+      data: {'name': name, if (parentId != null) 'parent_id': parentId},
+    );
     return Map<String, dynamic>.from(res.data);
   }
 
@@ -74,8 +85,10 @@ class ApiClient {
 
   // ── Files ──
   Future<List<Map<String, dynamic>>> listFiles({String? folderId}) async {
-    final res = await dio.get('$_base/files',
-        queryParameters: folderId != null ? {'folder_id': folderId} : null);
+    final res = await dio.get(
+      '$_base/files',
+      queryParameters: folderId != null ? {'folder_id': folderId} : null,
+    );
     return List<Map<String, dynamic>>.from(res.data);
   }
 
@@ -89,12 +102,17 @@ class ApiClient {
       'file': await MultipartFile.fromFile(filePath, filename: fileName),
       if (folderId != null) 'folder_id': folderId,
     });
-    final res = await dio.post('$_base/files/upload',
-        data: formData, onSendProgress: onProgress);
+    final res = await dio.post(
+      '$_base/files/upload',
+      data: formData,
+      onSendProgress: onProgress,
+    );
     return Map<String, dynamic>.from(res.data);
   }
 
   String downloadUrl(String fileId) => '$_base/files/$fileId/download';
+
+  String thumbnailUrl(String fileId) => '$_base/files/$fileId/thumbnail';
 
   Map<String, String> get authHeaders => AppConfig.authHeaders;
 
@@ -117,14 +135,22 @@ class ApiClient {
   String pdfPageUrl(String fileId, int page) =>
       '$_base/files/$fileId/render/page/$page';
 
-  Future<void> downloadFile(String fileId, String savePath,
-      {void Function(int, int)? onProgress}) async {
-    await dio.download(downloadUrl(fileId), savePath,
-        onReceiveProgress: onProgress);
+  Future<void> downloadFile(
+    String fileId,
+    String savePath, {
+    void Function(int, int)? onProgress,
+  }) async {
+    await dio.download(
+      downloadUrl(fileId),
+      savePath,
+      onReceiveProgress: onProgress,
+    );
   }
 
-  Future<Uint8List> downloadBytes(String fileId,
-      {void Function(int, int)? onProgress}) async {
+  Future<Uint8List> downloadBytes(
+    String fileId, {
+    void Function(int, int)? onProgress,
+  }) async {
     final res = await dio.get<List<int>>(
       downloadUrl(fileId),
       options: Options(responseType: ResponseType.bytes),
@@ -148,8 +174,10 @@ class ApiClient {
 
   // ── Browse ──
   Future<Map<String, dynamic>> browse({String? folderId}) async {
-    final res = await dio.get('$_base/browse',
-        queryParameters: folderId != null ? {'folder_id': folderId} : null);
+    final res = await dio.get(
+      '$_base/browse',
+      queryParameters: folderId != null ? {'folder_id': folderId} : null,
+    );
     return Map<String, dynamic>.from(res.data);
   }
 
@@ -174,7 +202,10 @@ class ApiClient {
   }
 
   // ── OCR ──
-  Future<Map<String, dynamic>> submitOcr(String filePath, String fileName) async {
+  Future<Map<String, dynamic>> submitOcr(
+    String filePath,
+    String fileName,
+  ) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath, filename: fileName),
     });
