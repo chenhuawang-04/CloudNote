@@ -112,7 +112,7 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
     final isImage = widget.file.isImage;
     final isMarkdown = widget.file.isMarkdown;
     final isPdf = widget.file.isPdf;
-    final url = ApiClient().downloadUrl(widget.file.id);
+    final previewUrl = ApiClient().thumbnailUrl(widget.file.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -132,9 +132,10 @@ class _FilePreviewScreenState extends State<FilePreviewScreen> {
           ? InteractiveViewer(
               child: Center(
                 child: Image.network(
-                  url,
+                  previewUrl,
                   headers: ApiClient().authHeaders,
                   fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
                   errorBuilder: (_, __, ___) =>
                       const Icon(Icons.broken_image, size: 64),
                 ),
